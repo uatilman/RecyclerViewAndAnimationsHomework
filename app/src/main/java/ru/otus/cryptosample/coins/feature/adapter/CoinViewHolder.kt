@@ -8,10 +8,18 @@ import ru.otus.cryptosample.R
 import ru.otus.cryptosample.coins.feature.CoinState
 import ru.otus.cryptosample.databinding.ItemCoinBinding
 
+/**
+ * ViewHolder для отображения информации о конкретной монете.
+ */
 class CoinViewHolder(
     private val binding: ItemCoinBinding
 ) : RecyclerView.ViewHolder(binding.root) {
 
+    /**
+     * Привязывает данные монеты к вью.
+     *
+     * @param coin Состояние монеты для отображения.
+     */
     fun bind(coin: CoinState) {
         with(binding) {
             coinName.text = coin.name
@@ -32,5 +40,15 @@ class CoinViewHolder(
 
             fireBadge.isVisible = coin.highlight
         }
+    }
+
+    /**
+     * Частичное обновление: меняет только видимость бейджика "горячей" монеты.
+     * Используется при обработке payloads для избежания полной перерисовки элемента.
+     *
+     * @param highlight Нужно ли отображать бейджик 🔥.
+     */
+    fun updateHighlight(highlight: Boolean) {
+        binding.fireBadge.isVisible = highlight
     }
 }
