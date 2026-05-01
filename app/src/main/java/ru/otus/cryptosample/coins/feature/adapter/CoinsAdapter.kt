@@ -12,7 +12,7 @@ import ru.otus.cryptosample.databinding.ItemHorizontalCoinsBinding
 
 /**
  * Основной адаптер для отображения списка криптовалют.
- * Поддерживает отображение заголовков, карточек монет в сетке и горизонтальных лент.
+ * Поддерживает отображение заголовков, карточек монет в сетке и вложенных горизонтальных лент.
  *
  * @param viewPool Пул вью для переиспользования холдеров монет между основным и вложенными списками.
  */
@@ -23,22 +23,24 @@ class CoinsAdapter(
     companion object {
         /** Тип представления для заголовка категории */
         const val VIEW_TYPE_CATEGORY = 10
-        /** Тип представления для карточки монеты в сетке */
+        /** Тип представления для карточки монеты в основной сетке */
         const val VIEW_TYPE_COIN_GRID = 11
-        /** Тип представления для вложенного горизонтального списка */
+        /** Тип представления для контейнера горизонтального списка */
         const val VIEW_TYPE_HORIZONTAL_LIST = 12
-        /** Тип представления для карточки монеты в горизонтальном списке */
+        /** Тип представления для карточки монеты в горизонтальной ленте */
         const val VIEW_TYPE_COIN_HORIZONTAL = 13
 
         /** Ширина карточки монеты в горизонтальном списке в dp */
         const val COIN_ITEM_WIDTH_DP = 160
-        /** Порог количества монет, после которого категория становится горизонтальной */
+        /** Порог количества монет, после которого категория отображается горизонтально */
         const val HORIZONTAL_THRESHOLD = 10
     }
 
     /**
-     * Преобразует данные категорий в список элементов адаптера.
-     * Если в категории более [HORIZONTAL_THRESHOLD] монет, используется горизонтальный список.
+     * Преобразует иерархические данные категорий в плоский список элементов для адаптера.
+     * Если в категории более [HORIZONTAL_THRESHOLD] монет, она отображается как горизонтальная лента.
+     *
+     * @param categories Список категорий с монетами.
      */
     fun setData(categories: List<CoinCategoryState>) {
         val adapterItems = mutableListOf<CoinsAdapterItem>()
@@ -90,6 +92,9 @@ class CoinsAdapter(
         }
     }
 
+    /**
+     * Обработка частичного обновления через payloads для минимизации перерисовок.
+     */
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads)
@@ -98,6 +103,7 @@ class CoinsAdapter(
             if (item is CoinsAdapterItem.CoinItem && holder is CoinViewHolder) {
                 payloads.forEach { payload ->
                     if (payload == HorizontalCoinsAdapter.PAYLOAD_HIGHLIGHT) {
+                        // Обновляем только статус подсветки (бейдж 🔥)
                         holder.updateHighlight(item.coin.highlight)
                     }
                 }
@@ -108,7 +114,7 @@ class CoinsAdapter(
     }
 
     /**
-     * Callback для вычисления разницы между элементами списка.
+     * Callback для вычисления разницы между элементами списка (DiffUtil).
      */
     class CoinsDiffCallback : DiffUtil.ItemCallback<CoinsAdapterItem>() {
         override fun areItemsTheSame(oldItem: CoinsAdapterItem, newItem: CoinsAdapterItem): Boolean {
@@ -129,6 +135,7 @@ class CoinsAdapter(
 
         override fun getChangePayload(oldItem: CoinsAdapterItem, newItem: CoinsAdapterItem): Any? {
             if (oldItem is CoinsAdapterItem.CoinItem && newItem is CoinsAdapterItem.CoinItem) {
+                // Если изменилось только состояние подсветки, возвращаем payload для частичного обновления
                 if (oldItem.coin.highlight != newItem.coin.highlight) {
                     return HorizontalCoinsAdapter.PAYLOAD_HIGHLIGHT
                 }
